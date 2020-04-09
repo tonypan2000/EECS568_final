@@ -38,4 +38,14 @@ function input_data = read_kitti(dataset)
         input_data.velmode = [input_data.velmode cell2mat(raw_input(29))];
         input_data.orimode = [input_data.orimode cell2mat(raw_input(30))];
     end
+    
+    format_spec = 'yyyy-MM-dd HH:mm:ss.SSSSSS';
+    file = fopen(strcat(dataset, '/timestamps.txt'));
+    line = fgetl(file);
+    while ischar(line)
+        raw_input = datetime(line, 'InputFormat', format_spec);
+        input_data.timestamp = [input_data.timestamp raw_input];
+        line = fgetl(file);
+    end
+    fclose(file);
 end

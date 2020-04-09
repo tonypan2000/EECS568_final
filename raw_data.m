@@ -30,6 +30,7 @@ classdef raw_data < handle
         posmode = [];       % position mode of primary GPS receiver (see gps_mode_to_string)
         velmode = [];       % velocity mode of primary GPS receiver (see gps_mode_to_string)
         orimode = []; 
+        timestamp = [];
     end
     
     methods
