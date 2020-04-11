@@ -27,6 +27,7 @@ classdef liekf < handl
             obj.Sigma = init_sigma;
             % Motion noise (in odometry space, Table 5.5, p.134 in book).
             % variance of noise proportional to alphas
+            % TODO: check motion noise covariance dimension
             alphas = [0.00025 0.00005 0.0025 0.0005 0.0025 0.0005].^2; 
             obj.M = @(u) [alphas(1)*u(1)^2+alphas(2)*u(2)^2, 0, 0;
                         0, alphas(3)*u(1)^2+alphas(4)*u(2)^2, 0;
@@ -44,9 +45,9 @@ classdef liekf < handl
         end
         
         function AdX = Ad(obj, X)
-           % TODO:
-           % Left-invariant Adjoint
-           AdX = [X(1:2,1:2), [X(2,3); -X(1,3)]; 0 0 1];
+            % No need for adjoint function in left IEKF
+            % Left-invariant Adjoint
+            AdX = [X(1:2,1:2), [X(2,3); -X(1,3)]; 0 0 1];
         end
         
         function H = posemat(state)
@@ -86,12 +87,23 @@ classdef liekf < handl
             % propagate covariance
             Phi = obj.Phi(u);
             obj.Sigma_pred = Phi*(obj.Sigma + obj.Q*obj.dt_imu)*Phi';
+            
             % propagate mean
             obj.mu_pred = obj.gfun(u);
         end
         
-        function correction(obj, Y1, b1, Y2, b2)
+        function correction(obj, Y, b)
             % TODO
+            H = [zeros(3), zeros(3), eye(3)];
+            N = obj.mu_pred * obj.Q * obj.mu_pred'; % TODO: this makes no sense!
+            S = H * obj.Sigma_pred * H' + N;
+            L = obj.Sigma_pred*H' / S; % Kalman gain
+            % Covariance update
+            I9 = eye(9);
+            obj.Sigma = (I9-L*H) * obj.Sigma_pred * (I9-L*H)' + L*N*L';
+            % Mean update
+            obj.mu = obj.mu_pred * expm(L*(obj.mu_pred \ Y - b)); %TODO: check Y, b
+            %{
             % RI-EKF correction step
             H = [obj.H(b1); obj.H(b2)]; % stack H
             H = H([1:2,4:5],:); % 4x3 matrix, remove zero rows 
@@ -110,6 +122,7 @@ classdef liekf < handl
             % Update Covariance
             I = eye(size(obj.P));
             obj.P = (I - L * H) * obj.P * (I - L * H)' + L * N * L'; 
+            %}
         end
         
         function Xk1 = propagationModel(obj, u)
