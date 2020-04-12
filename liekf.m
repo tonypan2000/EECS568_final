@@ -6,7 +6,7 @@ classdef liekf < handl
         gfun;               % Motion (process) model function
         mu_pred;            % Mean after prediction step
         Sigma_pred;         % Sigma after prediction step
-        mu_cart;
+        mu_cart;            % Mean in Cartesian coordinate
         sigma_cart;
         M;                  % Motion model noise covariance function
         Q;                  % Measurement model noise covariance
@@ -95,7 +95,7 @@ classdef liekf < handl
         function correction(obj, Y, b)
             % TODO
             H = [zeros(3), zeros(3), eye(3)];
-            N = obj.mu_pred * obj.Q * obj.mu_pred'; % TODO: this makes no sense!
+            N = obj.mu_pred \ obj.Q / obj.mu_pred'; % TODO: this makes no sense!
             S = H * obj.Sigma_pred * H' + N;
             L = obj.Sigma_pred*H' / S; % Kalman gain
             % Covariance update
@@ -103,6 +103,7 @@ classdef liekf < handl
             obj.Sigma = (I9-L*H) * obj.Sigma_pred * (I9-L*H)' + L*N*L';
             % Mean update
             obj.mu = obj.mu_pred * expm(L*(obj.mu_pred \ Y - b)); %TODO: check Y, b
+            obj.lie2cart();
             %{
             % RI-EKF correction step
             H = [obj.H(b1); obj.H(b2)]; % stack H
@@ -206,6 +207,16 @@ classdef liekf < handl
                    1,  0,  0;
                    0,  0,  0 ];
             phi_wedge = phi(1)*G1 + phi(2)*G2 + phi(3)*G3;
+        end
+        
+        function lie2cart(obj)
+            % Status: complete
+            % lie to cartesian transformation
+            eul = rotm2eul(obj.mu(1:3,1:3));
+            roll = eul(3);
+            pitch = eul(2);
+            yaw = eul(1);
+            obj.mu_cart = [roll; pitch; yaw; obj.mu(1:3,4); obj.mu(1:3,5)];
         end
     end
     
