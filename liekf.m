@@ -92,10 +92,12 @@ classdef liekf < handl
             obj.mu_pred = obj.gfun(u);
         end
         
-        function correction(obj, Y, b)
+        function correction(obj, Y)
             % TODO
+            R = obj.mu_pred(1:3,1:3);
+            b = [zeros(3,1); 0; 1];
             H = [zeros(3), zeros(3), eye(3)];
-            N = obj.mu_pred \ obj.Q / obj.mu_pred'; % TODO: this makes no sense!
+            N = R \ obj.Q / R'; % TODO: this makes no sense!
             S = H * obj.Sigma_pred * H' + N;
             L = obj.Sigma_pred*H' / S; % Kalman gain
             % Covariance update
@@ -186,8 +188,8 @@ classdef liekf < handl
             Phi11 = obj.Gamma0(udt)';
             Phi22 = Phi11;
             Phi33 = Phi11;
-            Phi21 = -obj.Gamma0(udt)' * obj.wedge_so3(obj.Gamma1(udt)*u(1:3))*obj.dt_imu;
-            Phi31 = -obj.Gamma0(udt)' * obj.wedge_so3(obj.Gamma2(udt)*u(1:3))*obj.dt_imu;
+            Phi21 = -obj.Gamma0(udt)' * obj.wedge_so3(obj.Gamma1(udt)*u(1:3)) * obj.dt_imu;
+            Phi31 = -obj.Gamma0(udt)' * obj.wedge_so3(obj.Gamma2(udt)*u(1:3)) * obj.dt_imu;
             Phi32 = obj.Gamma0(udt)'*obj.dt_imu;
             Phi_mat = [Phi11,   zeros(3),  zeros(3);
                        Phi21,   Phi22,     zeros(3);
