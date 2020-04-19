@@ -1,17 +1,21 @@
 classdef liekf < handl
-    
+    %LIEKF Left-Invariant EKF with IMU bias estimation.
     properties
-        mu;                 % Pose Mean
-        Sigma;              % Pose Sigma
+        mu;                 % Pose Mean. 5x5
+        Sigma;              % Pose Sigma. 15x15
         gfun;               % Motion (process) model function
-        mu_pred;            % Mean after prediction step
-        Sigma_pred;         % Sigma after prediction step
+        mu_pred;            % Mean after prediction step 5x5
+        Sigma_pred;         % Sigma after prediction step 15x15
         mu_cart;            % Mean in Cartesian coordinate
-        sigma_cart;
-        M;                  % Motion model noise covariance function
-        Q;                  % Measurement model noise covariance
+                            % [roll pitch yaw vx vy vz px py pz] 9x1
+        sigma_cart;         % Covariance in Cartesian coordinate
+        M;                  % Motion model noise covariance function. 6x6
+        Q;                  % Measurement model noise covariance. 3x3
         dt_imu;             % IMU update period. TODO: check period, initialization
         g;                  % Gravity constant. TODO
+        b_a;                % IMU bias for accelerometer. 3x1
+        b_g;                % IMU bias for gyroscope. 3x1
+        theta_b;            % IMU bias vector. theta = [b_g; b_a] 6x1
     end
     
     methods
@@ -38,13 +42,7 @@ classdef liekf < handl
             obj.g = 9.81;
         end
         
-        function AdX = Ad(X)
-            % No need for adjoint function in left IEKF
-            % Left-invariant Adjoint
-            AdX = [X(1:2,1:2), [X(2,3); -X(1,3)]; 0 0 1];
-        end
-        
-        function H = posemat(state)
+        function X = posemat(state)
             x = state(1);
             y = state(2);
             z = state(3);
@@ -54,11 +52,10 @@ classdef liekf < handl
             vx = state(7);
             vy = state(8);
             vz = state(9);
-            % TODO: figure order of pitch and yaw
             euler_angle = [yaw pitch roll];
             rot_mat = eul2rotm(euler_angle);
             % construct a SE(3) matrix element
-            H = [...
+            X = [...
                 rot_mat(1,1) rot_mat(1,2) rot_mat(1,3) vx x;
                 rot_mat(2,1) rot_mat(2,2) rot_mat(2,3) vy y;
                 rot_mat(3,1) rot_mat(3,2) rot_mat(3,3) vz z;
@@ -67,105 +64,121 @@ classdef liekf < handl
         end
         
         function prediction(obj, u)
-            % Formulate Adjoint function to be used in propagation
-            % Convert motion command into lie algebra element to pass 
-            % in to propagation
-
+            % propagate mean
+            obj.mu_pred = obj.gfun(u);
+            
             % propagate covariance
             Phi = obj.Phi(u);
             obj.Sigma_pred = Phi*(obj.Sigma + obj.Q*obj.dt_imu)*Phi';
-            
-            % propagate mean
-            obj.mu_pred = obj.gfun(u);
         end
         
-        function correction(obj, Y)
-            % TODO
+        function correction(obj, y)
+            %CORRECTION Correction step of LIEKF.
+            %   Input y should be 3x1.
+            Y = [y; 0; 1];  %5x1
             R = obj.mu_pred(1:3,1:3);
-            b = [zeros(3,1); 0; 1];
-            H = [zeros(3), zeros(3), eye(3)];
-            N = R \ obj.Q / R'; % TODO: this makes no sense!
-            S = H * obj.Sigma_pred * H' + N;
-            L = obj.Sigma_pred*H' / S; % Kalman gain
+            b = [zeros(3,1); 0; 1]; %5x1
+            H = [zeros(3), zeros(3), eye(3), zeros(3), zeros(3)];   %3x15
+            N = R' * obj.Q * R; %3x3
+            S = H * obj.Sigma_pred * H' + N;    %3x3
+            L = obj.Sigma_pred * H' / S; % Kalman gain 15x3
             % Covariance update
-            I9 = eye(9);
-            obj.Sigma = (I9-L*H) * obj.Sigma_pred * (I9-L*H)' + L*N*L';
+            I15 = eye(15);
+            obj.Sigma = (I15-L*H) * obj.Sigma_pred * (I15-L*H)' + L*N*L';
+            
             % Mean update
-            obj.mu = obj.mu_pred * expm(L*(obj.mu_pred \ Y - b)); %TODO: check Y, b
+            nu = obj.mu_pred \ Y - b;
+            PI = [eye(3), zeros(3,2)]; %3x5
+            obj.mu = obj.mu_pred * expm(obj.wedge_se23(L(1:9,:)*PI*nu));
+            obj.theta_b = obj.theta_b + L(10:15,:)*PI*nu;
             obj.lie2cart();
         end
         
         function Xk1 = propagationModel(obj, u)
             % Status: completed
             % Assuming the structure of u to be the following:
-            % u(1:3): IMU acceleration data ax, ay, az
-            % u(4:6): IMU angular velocity data wx, wy, wz
+            % u(1:3): IMU angular velocity data wx, wy, wz
+            % u(4:6): IMU acceleration data ax, ay, az
             % Input: full IMU data
             % Output: X_{k+1}_pred \in SE_2(3)
             % The motion model is the one described in lecture slide
             % 05_invariant_ekf.pdf p.34
+            u_unbias = u - obj.theta_b;
+            omega_unbias_dt = u_unbias(1:3)*obj.dt_imu;
+            accel_unbias = u_unbias(4:6);
             
             H = obj.mu;
             R = H(1:3,1:3);
             v = H(1:3,4);
             p = H(1:3,5);
-            R_pred = R*obj.Gamma0(u*obj.dt_imu);
-            v_pred = v + R*obj.Gamma1(u*obj.dt_imu)*u(1:3)*obj.dt_imu + obj.g*obj.dt_imu;
-            p_pred = p + v*obj.dt_imu +...
-                R*obj.Gamma2(u*obj.dt_imu)*u(1:3)*obj.dt_imu^2 + 0.5*obj.g*obj.dt_imu^2;
+            R_pred = R*obj.Gamma0(omega_unbias_dt);
+            v_pred = v + R*obj.Gamma1(omega_unbias_dt)*accel_unbias*obj.dt_imu...
+                + obj.g*obj.dt_imu;
+            p_pred = p + v*obj.dt_imu + R*obj.Gamma2(omega_unbias_dt)...
+                *accel_unbias*obj.dt_imu^2 + 0.5*obj.g*obj.dt_imu^2;
             
             Xk1 = [R_pred, v_pred, p_pred;
                         0,      1,      0;
                         0,      0,      1 ];
         end
         
-        function out = Gamma0(obj, u)
+        function out = Gamma0(obj, phi)
             % Status: complete
             % Please refer to lecture slide 05_invariant_ekf.pdf p.35
-            phi = u(4:6);
             theta = norm(phi,2);
             out = eye(3) + sin(theta) / theta * obj.wedge_so3(phi) +...
                 (1-cos(theta)) / theta^2 * (obj.wedge_so3(phi))^2;
         end
         
-        function out = Gamma1(obj, u)
+        function out = Gamma1(obj, phi)
             % Status: complete
             % Please refer to lecture slide 05_invariant_ekf.pdf p.35
-            phi = u(4:6);
             theta = norm(phi,2);
             out = eye(3) + (1-cos(theta)) / theta^2 * obj.wedge_so3(phi) +...
                 (theta-sin(theta)) / theta^3 * (obj.wedge_so3(phi))^2;
         end
         
-        function out = Gamma2(obj, u)
+        function out = Gamma2(obj, phi)
             % Status: complete
             % Please refer to lecture slide 05_invariant_ekf.pdf p.35
-            phi = u(4:6);
             theta = norm(phi,2);
             out = 0.5*eye(3) + (theta - sin(theta)) / theta^3 * obj.wedge_so3(phi) +...
                 (theta^2+2*cos(theta)-2) / (2*theta^4) * (obj.wedge_so3(phi))^2;
         end     
         
         function Phi_mat = Phi(obj, u)
-            % Construct Phi matrix for covariance propagation
-            % Please refer to lecture slide 05_invariant_ekf.pdf p.39
-            % TODO: check wedge part in Phi21 and Phi31. not sure if
-            % they're correct
-            udt = u*obj.dt_imu;
-            Phi11 = obj.Gamma0(udt)';
-            Phi22 = Phi11;
-            Phi33 = Phi11;
-            Phi21 = -obj.Gamma0(udt)' * obj.wedge_so3(obj.Gamma1(udt)*u(1:3)) * obj.dt_imu;
-            Phi31 = -obj.Gamma0(udt)' * obj.wedge_so3(obj.Gamma2(udt)*u(1:3)) * obj.dt_imu;
-            Phi32 = obj.Gamma0(udt)'*obj.dt_imu;
-            Phi_mat = [Phi11,   zeros(3),  zeros(3);
-                       Phi21,   Phi22,     zeros(3);
-                       Phi31,   Phi32,     Phi33    ];
+            %PHI Construct Phi matrix for covariance propagation. This is
+            %   specifically for the biased-version of Lef-Invariant 
+            %   Extended Kalman Filter.
+            %   Please refer to lecture slide 05_invariant_ekf.pdf p.36 and
+            %   the paper "Contact-Aided Invariant Extended Kalman Filter
+            %   for Legged Robots" p.28
+            u_unbias = u - obj.theta_b;
+            omega_unbias = u_unbias(1:3);
+            accel_unbias = u_unbias(4:6);
+            
+            omega_wedge = wedge_so3(omega_unbias);
+            zero_3 = zeros(3);
+            A_l = [-omega_wedge, zero_3, zero_3, -eye(3), zero_3;
+                   -wedge_so3(accel_unbias), -omega_wedge, zero_3, zero_3, -eye(3);
+                   zero_3, eye(3), -omega_wedge, zero_3, zero_3;
+                   zeros(6,15)                                                      ];
+            Phi_mat = expm(A_l);
+        end
+        
+        function phi_wedge = wedge_se23(phi)
+            %WEDGE_SE23 Construct the wedge matrix from vector in R^9
+            %   to 5x5
+            R = obj.wedge_so3(phi(1:3));
+            phi_wedge = [R, phi(4:6), phi(7:9);
+                         zeros(2,3)            ];
         end
         
         function phi_wedge = wedge_so3(phi)
-            % Status: complete
-            % wedge operation for so(3)
+            %WEDGE_SO3 Construct the skew symmetric matrix from the
+            %   correspoinding vector in R^3
+            %   Status: complete
+            %   wedge operation for so(3)
             G1 = [ 0,  0,  0;
                    0,  0, -1;
                    0,  1,  0 ];
