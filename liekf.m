@@ -10,7 +10,7 @@ classdef liekf < handle
                             % [roll, pitch, yaw, vx, vy, vz, px, py, pz]
         sigma_cart;
         M;                  % Motion model noise covariance 6x6
-        Q;                  % Measurement model noise covariance 3x3
+        Q;                  % Measurement model noise covariance 9x9
         dt_imu;             % IMU update period. TODO: check period, initialization
         g;                  % Gravity constant. TODO
     end
@@ -35,7 +35,7 @@ classdef liekf < handle
             obj.dt_imu = 0.1;   %TODO
             
             % Gravity initialization
-            obj.g = 9.81;
+            obj.g = [0, 0, -9.81]';
         end
         
         function X = posemat(state)
@@ -67,7 +67,7 @@ classdef liekf < handle
 
             % propagate covariance
             Phi = obj.Phi(u);
-            obj.Sigma_pred = Phi*(obj.Sigma + obj.Q*obj.dt_imu)*Phi';
+            obj.Sigma_pred = Phi*(obj.Sigma + obj.M*obj.dt_imu)*Phi';
             
             % propagate mean
             obj.mu_pred = obj.gfun(u);
