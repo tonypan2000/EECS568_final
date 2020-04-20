@@ -9,10 +9,10 @@ classdef liekf < handl
         mu_cart;            % Mean in Cartesian coordinate
                             % [roll pitch yaw vx vy vz px py pz] 9x1
         sigma_cart;         % Covariance in Cartesian coordinate
-        M;                  % Motion model noise covariance function. 6x6
+        M;                  % Motion model noise covariance function. 15x15
         Q;                  % Measurement model noise covariance. 3x3
         dt_imu;             % IMU update period. TODO: check period, initialization
-        g;                  % Gravity constant. TODO
+        g;                  % Gravity vector. TODO
         b_a;                % IMU bias for accelerometer. 3x1
         b_g;                % IMU bias for gyroscope. 3x1
         theta_b;            % IMU bias vector. theta = [b_g; b_a] 6x1
@@ -28,10 +28,10 @@ classdef liekf < handl
             % Motion noise (in odometry space, Table 5.5, p.134 in book).
             % variance of noise proportional to alphas
             % TODO: check motion noise covariance dimension
-            alphas = [0.00025 0.00005 0.0025 0.0005 0.0025 0.0005].^2; 
-            obj.M = @(u) [alphas(1)*u(1)^2+alphas(2)*u(2)^2, 0, 0;
-                        0, alphas(3)*u(1)^2+alphas(4)*u(2)^2, 0;
-                        0, 0, alphas(5)*u(1)^2+alphas(6)*u(2)^2];
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            M = repmat(0.01^2, 15, 1);
+            obj.M = diag(M);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % std. of Gaussian sensor noise (independent of distance)
             obj.Q = diag([0.01, 0.01, 0.01]);
                 
@@ -39,7 +39,7 @@ classdef liekf < handl
             obj.dt_imu = 0.1;   %TODO
             
             % Gravity initialization
-            obj.g = 9.81;
+            obj.g = [0, 0, -9.81]';
         end
         
         function X = posemat(state)
@@ -69,7 +69,7 @@ classdef liekf < handl
             
             % propagate covariance
             Phi = obj.Phi(u);
-            obj.Sigma_pred = Phi*(obj.Sigma + obj.Q*obj.dt_imu)*Phi';
+            obj.Sigma_pred = Phi*(obj.Sigma + obj.M*obj.dt_imu)*Phi';
         end
         
         function correction(obj, y)
