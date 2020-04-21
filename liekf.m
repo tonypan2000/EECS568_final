@@ -1,4 +1,4 @@
-classdef liekf < handl
+classdef liekf < handle
     %LIEKF Left-Invariant EKF with IMU bias estimation.
     properties
         mu;                 % Pose Mean. 5x5
@@ -19,12 +19,13 @@ classdef liekf < handl
     end
     
     methods
-        function obj = liekf(init_mu, init_sigma)
+        function obj = liekf(init_mu, init_sigma, init_imu_bias)
             %LIEKF Construct an instance of this class
             %   Input: init          - motion and noise models
-            obj.gfun = obj.propagationModel;
+            obj.gfun = @(u) obj.propagationModel(u);
             obj.mu = init_mu;
             obj.Sigma = init_sigma;
+            obj.theta_b = init_imu_bias;
             % Motion noise (in odometry space, Table 5.5, p.134 in book).
             % variance of noise proportional to alphas
             % TODO: check motion noise covariance dimension
@@ -103,6 +104,7 @@ classdef liekf < handl
             % Output: X_{k+1}_pred \in SE_2(3)
             % The motion model is the one described in lecture slide
             % 05_invariant_ekf.pdf p.34
+            
             u_unbias = u - obj.theta_b;
             omega_unbias_dt = u_unbias(1:3)*obj.dt_imu;
             accel_unbias = u_unbias(4:6);
@@ -118,8 +120,8 @@ classdef liekf < handl
                 *accel_unbias*obj.dt_imu^2 + 0.5*obj.g*obj.dt_imu^2;
             
             Xk1 = [R_pred, v_pred, p_pred;
-                        0,      1,      0;
-                        0,      0,      1 ];
+                   0, 0,0,      1,      0;
+                    0,0,0,      0,      1 ];
         end
         
         function out = Gamma0(obj, phi)
@@ -154,27 +156,28 @@ classdef liekf < handl
             %   the paper "Contact-Aided Invariant Extended Kalman Filter
             %   for Legged Robots" p.28
             u_unbias = u - obj.theta_b;
-            omega_unbias = u_unbias(1:3);
+            omega_unbias = [u_unbias(1:3)];
             accel_unbias = u_unbias(4:6);
             
-            omega_wedge = wedge_so3(omega_unbias);
+            omega_wedge = obj.wedge_so3(omega_unbias);
             zero_3 = zeros(3);
             A_l = [-omega_wedge, zero_3, zero_3, -eye(3), zero_3;
-                   -wedge_so3(accel_unbias), -omega_wedge, zero_3, zero_3, -eye(3);
+                   -obj.wedge_so3(accel_unbias), -omega_wedge, zero_3, zero_3, -eye(3);
                    zero_3, eye(3), -omega_wedge, zero_3, zero_3;
                    zeros(6,15)                                                      ];
             Phi_mat = expm(A_l);
         end
         
-        function phi_wedge = wedge_se23(phi)
+        function phi_wedge = wedge_se23(obj,phi)
             %WEDGE_SE23 Construct the wedge matrix from vector in R^9
             %   to 5x5
             R = obj.wedge_so3(phi(1:3));
+       
             phi_wedge = [R, phi(4:6), phi(7:9);
-                         zeros(2,3)            ];
+                         zeros(2,5)            ];
         end
         
-        function phi_wedge = wedge_so3(phi)
+        function phi_wedge = wedge_so3(obj,phi)
             %WEDGE_SO3 Construct the skew symmetric matrix from the
             %   correspoinding vector in R^3
             %   Status: complete
