@@ -27,6 +27,9 @@ imu_bias_init = [0;0;0;0;0;0];
 %Initilaize Filter
 filter = liekf(mu_init, sigma_init, imu_bias_init);
 
+% saves trajectory in se3 as 12 X 1 vectors
+poses = [];
+
 %Main Loop
 for t = 2:length(data.lat)
     % Prediction Step
@@ -39,6 +42,8 @@ for t = 2:length(data.lat)
     filter.correction(y);
     result(t-1,:) = filter.mu_cart;
     
+    % appends se3 pose
+    poses = [poses; filter.pose];
     
     
     %Plot
@@ -65,4 +70,7 @@ for t = 2:length(data.lat)
     end
 
 end
+
+% saves se3 poses trajectory to a .txt file
+writematrix(poses,strcat(filename, '_poses.txt'),'Delimiter',' ')
 
