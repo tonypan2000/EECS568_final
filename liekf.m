@@ -16,6 +16,9 @@ classdef liekf < handle
         b_a;                % IMU bias for accelerometer. 3x1
         b_g;                % IMU bias for gyroscope. 3x1
         theta_b;            % IMU bias vector. theta = [b_g; b_a] 6x1
+        
+        se3;                % state representation in SE3
+        pose;               % odometry pose for visual processing
     end
     
     methods
@@ -93,6 +96,9 @@ classdef liekf < handle
             obj.mu = obj.mu_pred * expm(obj.wedge_se23(L(1:9,:)*PI*nu));
             obj.theta_b = obj.theta_b + L(10:15,:)*PI*nu;
             obj.lie2cart();
+            
+            obj.se3 = [obj.mu(1:3,1:3) obj.mu(1:3,5); 0 0 0 1];
+            obj.pose = [obj.se3(1,1:4) obj.se3(2,1:4) obj.se3(3,1:4)];
         end
         
         function Xk1 = propagationModel(obj, u)
