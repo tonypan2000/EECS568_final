@@ -31,7 +31,6 @@ classdef liekf < handle
             obj.theta_b = init_imu_bias;
             % Motion noise (in odometry space, Table 5.5, p.134 in book).
             % variance of noise proportional to alphas
-            % TODO: check motion noise covariance dimension
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             M = repmat(0.01^2, 15, 1);
             obj.M = diag(M);
@@ -40,7 +39,7 @@ classdef liekf < handle
             obj.Q = diag([0.01, 0.01, 0.01]);
                 
             % IMU period initialization
-            obj.dt_imu = 0.1;   %TODO
+            obj.dt_imu = 0.1;
             
             % Gravity initialization
             obj.g = [0, 0, -9.81]';

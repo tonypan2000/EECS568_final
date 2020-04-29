@@ -1,5 +1,5 @@
 function input_data = read_kitti(dataset)
-    directory = strcat(dataset, '/data/');
+    directory = strcat(dataset, '/oxts/data/');
     input_files = dir(directory);
     input_data = raw_data();
     for i=3:length(input_files)
@@ -40,7 +40,7 @@ function input_data = read_kitti(dataset)
     end
     
     format_spec = 'yyyy-MM-dd HH:mm:ss.SSSSSS';
-    file = fopen(strcat(dataset, '/timestamps.txt'));
+    file = fopen(strcat(dataset, '/oxts/timestamps.txt'));
     line = fgetl(file);
     while ischar(line)
         raw_input = datetime(line, 'InputFormat', format_spec);
