@@ -6,9 +6,9 @@ You can see a video of our program localizing and building a map with KITTI here
 
 You can find our final report [here](https://www.overleaf.com/read/wpzrydmcjzbj).
 
-## Left-InEKF Localization
-
 These instructions will get you a copy of the project up and running on your local machine.
+
+## Left-InEKF Localization
 
 ### Prerequisites
 
@@ -28,8 +28,6 @@ After that, simply run `Main.m` and it will save the poses in SE3 as 12 by 1 vec
 
 ## Semantic Mapping with LiDAR Points
 
-These instructions will get you a copy of the project up and running on your local machine.
-
 For test, we are using `gtFine_trainvaltest.zip (241MB) [md5]` as labels, and using `leftImg8bit_trainvaltest.zip (11GB) [md5]` as raw input images for training.
 
 When validating our training outcome, we are using the images of `val` subfolder of the corresponding datasets.
@@ -44,9 +42,9 @@ To test our code, we are now using deducted train, label and val sets.
 * OpenCV
 * CMake
 * Eigen
-* Octomap: version 1.9.5, built from https://github.com/OctoMap/octomap devel branch
+* [Octomap](https://github.com/OctoMap/octomap): version 1.9.5, devel branch
 
-## Usage
+### Usage
 
 ```
 mkdir build
@@ -66,7 +64,7 @@ make
 `*.ot` files are for visualization with `Octovis`.
 
 
-## Dataset Used
+## Datasets Used
 
 * [KITTI](http://www.cvlibs.net/datasets/kitti/) Vision Benchmark Suite
 * [CityScapes](https://www.cityscapes-dataset.com/downloads/) Semantic Understanding of Urban Street Scenes
