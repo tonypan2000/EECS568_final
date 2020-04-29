@@ -2,13 +2,16 @@ clear;
 clc;
 
 %Read in data - Change this to arg for file select?
-filename = '0009';
+filename = '2011_10_03_drive_0027_sync';
 data = read_kitti(filename);
 
 show_images = true;
 if show_images
     images = read_images(filename);
 end
+
+% read ground truth
+ground_truth = dlmread('poses/00.txt');
 
 %Build mu_init
 eul = [data.yaw(1), data.pitch(1), data.roll(1)];
@@ -30,6 +33,11 @@ filter = liekf(mu_init, sigma_init, imu_bias_init);
 % saves trajectory in se3 as 12 X 1 vectors
 poses = [];
 
+% record video
+vo = VideoWriter('video', 'MPEG-4');
+set(vo, 'FrameRate', 10);
+open(vo);
+
 %Main Loop
 for t = 2:length(data.lat)
     % Prediction Step
@@ -44,33 +52,55 @@ for t = 2:length(data.lat)
     
     % appends se3 pose
     poses = [poses; filter.pose];
-    
-    
+   
     %Plot
     if show_images
-        figure(1); clf; hold on;
+        figure(1); clf;
         subplot(2,1,1)
-        hold on 
+        hold on; axis equal;
         plot(result(1:t-1,7),result(1:t-1,8))
         plot(result(t-1,7),result(t-1,8),'*')
-        xlim([-100 250])
-        ylim([-100 100])
+        xlim([-300 450]);
+        ylim([-150 500]);
         hold off
 
         subplot(2,1,2)
         imshow(images{t})
         drawnow limitrate
+        
+        F = getframe(gcf);
+        writeVideo(vo, F);
     else
-        figure(1); clf; hold on;
+        figure(1); clf;
+        hold on; axis equal;
         plot(result(1:t-1,7),result(1:t-1,8))
         plot(result(t-1,7),result(t-1,8),'*')
-        xlim([-100 250])
-        ylim([-100 100])
+        plot(ground_truth(1:t-1,4),ground_truth(1:t-1,12))
+        plot(ground_truth(t-1,4),ground_truth(t-1,12),'-')
+        xlim([-300 300]);
+        ylim([-50 500]);
+        hold off
+
         drawnow limitrate
     end
 
 end
 
+% plot
+% figure(1); clf;
+% hold on; axis equal;
+% % plot ground truth poses
+% plot(ground_truth(1:length(ground_truth),4),ground_truth(1:length(ground_truth),12))  
+% % plot our trajectory
+% plot(result(1:length(result),7),result(1:length(result),8))
+% legend('Ground Truth','Left-InEKF')
+% title('Ground Truth vs. Left-Invariant EKF Trajectory')
+% xlim([-300 450]);
+% ylim([-150 500]);
+
+% saves video
+close(vo);
+
 % saves se3 poses trajectory to a .txt file
-writematrix(poses,strcat(filename, '_poses.txt'),'Delimiter',' ')
+% writematrix(poses,strcat(filename, '_poses.txt'),'Delimiter',' ')
 
