@@ -1,8 +1,10 @@
 # InEKF Localization and Semantic Mapping on the KITTI Dataset
 
-This is our final project git repository for EECS 568: Mobile Robotics: Methods and Algorithms. Our project is InEKF Localization and Semantic Mapping on the KITTI Data Set.
+This is our final project git repository for EECS 568: Mobile Robotics: Methods and Algorithms. Our project is InEKF Localization and Semantic Mapping on the KITTI Dataset.
 
-You can see our final presentation video of our program localizing and building a map with KITTI here:
+You can see our final presentation video of our program localizing and building a map with KITTI [here](https://www.youtube.com/watch?v=A9tSE8NMWzA).
+
+[![](http://img.youtube.com/vi/A9tSE8NMWzA/0.jpg)](https://www.youtube.com/watch?v=A9tSE8NMWzA "Mobile Robotics Final Presentation")
 
 You can find our final report [here](https://www.overleaf.com/read/wpzrydmcjzbj).
 
