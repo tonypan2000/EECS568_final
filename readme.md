@@ -10,6 +10,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ## Left-InEKF Localization
 Click for full video
+
 [![](http://img.youtube.com/vi/7E5PInxk9EU/0.jpg)](http://www.youtube.com/watch?v=7E5PInxk9EU "Left-InEKF Localization Trajectory on KITTI") 
 
 ### Prerequisites
