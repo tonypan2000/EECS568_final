@@ -2,13 +2,15 @@
 
 This is our final project git repository for EECS 568: Mobile Robotics: Methods and Algorithms. Our project is InEKF Localization and Semantic Mapping on the KITTI Data Set.
 
-You can see a video of our program localizing and building a map with KITTI here:
+You can see our final presentation video of our program localizing and building a map with KITTI here:
 
 You can find our final report [here](https://www.overleaf.com/read/wpzrydmcjzbj).
 
 These instructions will get you a copy of the project up and running on your local machine.
 
 ## Left-InEKF Localization
+Click for full video
+[![](http://img.youtube.com/vi/7E5PInxk9EU/0.jpg)](http://www.youtube.com/watch?v=7E5PInxk9EU "Left-InEKF Localization Trajectory on KITTI") 
 
 ### Prerequisites
 
@@ -69,14 +71,19 @@ make
 * [KITTI](http://www.cvlibs.net/datasets/kitti/) Vision Benchmark Suite
 * [CityScapes](https://www.cityscapes-dataset.com/downloads/) Semantic Understanding of Urban Street Scenes
 
+## License: 
+We used the Octomap library, and their licenses are:
+  * octomap: [New BSD License](Semantic Mapping/LICENSE_OctoMap.txt)
+  * octovis and related libraries: [GPL](Semantic Mapping/LICENSE_Octovis.txt)
+
 ## Authors
 
-* [Mu-Ti Chung](https://github.com/mutichung)
-* [James Cooney](https://github.com/jpc4kp)
-* [Tony Pan](https://github.com/tonypan2000)
-* [Shoutian Wang](https://github.com/BoomSky0416)
-* [Haoxiang Wu]
+* [Mu-Ti Chung](https://github.com/mutichung) - <mtchung@umich.edu>
+* [James Cooney](https://github.com/jpc4kp) - <cooneyj@umich.edu>
+* [Tony Pan](https://github.com/tonypan2000) - <tonypan@umich.edu>
+* [Shoutian Wang](https://github.com/BoomSky0416) - <shoutian@umich.edu>
+* [Haoxiang Wu] - <hxwu@umich.edu>
 
 ## Acknowledgments
 
-Thank you to our instructor Maani Ghaffari for making this possible.
+Thank you to our instructor [Maani Ghaffari](https://www.maanighaffari.com/) for making this possible.
