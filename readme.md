@@ -6,7 +6,7 @@ You can see our final presentation video of our program localizing and building 
 
 [![](http://img.youtube.com/vi/A9tSE8NMWzA/0.jpg)](https://www.youtube.com/watch?v=A9tSE8NMWzA "Mobile Robotics Final Presentation")
 
-You can find our final report [here](https://www.overleaf.com/read/wpzrydmcjzbj).
+You can find our final report [here](https://github.com/tonypan2000/EECS568_final/blob/master/EECS_568_Final_Report.pdf).
 
 These instructions will get you a copy of the project up and running on your local machine.
 
