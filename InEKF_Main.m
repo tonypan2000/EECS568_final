@@ -105,5 +105,5 @@ end
 %close(vo);
 
 % saves se3 poses trajectory to a .txt file
-writematrix(poses,strcat(filename, '_poses.txt'),'Delimiter',' ')
+writematrix(poses,strcat('InEKF Localization\Results\',filename, '_poses.txt'),'Delimiter',' ')
 
