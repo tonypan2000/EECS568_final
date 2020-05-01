@@ -85,7 +85,7 @@ We used the Octomap library, and their licenses are:
 * [James Cooney](https://github.com/jpc4kp) - <cooneyj@umich.edu>
 * [Tony Pan](https://github.com/tonypan2000) - <tonypan@umich.edu>
 * [Shoutian Wang](https://github.com/BoomSky0416) - <shoutian@umich.edu>
-* [Haoxiang Wu] - <hxwu@umich.edu>
+* [Haoxiang Wu](https://github.com/whx1022) - <hxwu@umich.edu>
 
 ## Acknowledgments
 
