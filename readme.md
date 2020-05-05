@@ -23,7 +23,7 @@ Since our code is written in MATLAB, you can run our program on any OS platform.
 
 ### Running Localization Program
 
-First, you need to generate a trajectory with our Left-invariant EKF. To do so, edit line 5 of `Main.m` to feed it the input dataset folder name. For example, for the dataset `0009`, the line of code should look like:
+First, you need to generate a trajectory with our Left-invariant EKF. To do so, edit line 5 of `InEKF_Main.m` to feed it the input dataset folder name. For example, for the dataset `0009`, the line of code should look like:
 
 ```
 filename = '2011_09_26_drive_0079_sync';
