@@ -74,10 +74,10 @@ make
 * [KITTI](http://www.cvlibs.net/datasets/kitti/) Vision Benchmark Suite
 * [CityScapes](https://www.cityscapes-dataset.com/downloads/) Semantic Understanding of Urban Street Scenes
 
-## License: 
+## Licenses: 
 We used the Octomap library, and their licenses are:
-  * octomap: [New BSD License](Semantic Mapping/LICENSE_OctoMap.txt)
-  * octovis and related libraries: [GPL](Semantic Mapping/LICENSE_Octovis.txt)
+  * octomap: [New BSD License](Octomap/LICENSE_OctoMap.txt)
+  * octovis and related libraries: [GPL](Octomap/LICENSE_Octovis.txt)
 
 ## Authors
 
@@ -85,7 +85,7 @@ We used the Octomap library, and their licenses are:
 * [James Cooney](https://github.com/jpc4kp) - <cooneyj@umich.edu>
 * [Tony Pan](https://github.com/tonypan2000) - <tonypan@umich.edu>
 * [Shoutian Wang](https://github.com/BoomSky0416) - <shoutian@umich.edu>
-* [Haoxiang Wu] - <hxwu@umich.edu>
+* [Haoxiang Wu](https://github.com/whx1022) - <hxwu@umich.edu>
 
 ## Acknowledgments
 
